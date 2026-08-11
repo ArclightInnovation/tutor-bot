@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Tutor Bot — AI Tutoring Platform for Faculty & Students</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     :root {
       --bg-main: #f8fafc;
@@ -124,6 +125,12 @@
     /* Screen Views */
     .portal-screen { display: none; flex-direction: column; gap: 20px; }
     .portal-screen.active { display: flex; }
+    .notes-pad { min-height: 150px; line-height: 1.55; background: #fffef7; border-color: #fde68a; }
+    .session-end { border: 1px solid #c7d2fe; background: linear-gradient(135deg, #f5f3ff, #eef2ff); text-align: center; }
+    .session-end p { margin: 0; color: var(--text-muted); font-size: 0.88rem; }
+    @media (max-width: 680px) {
+      .student-grid, .landing-grid { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>
@@ -149,7 +156,7 @@
           An AI tutoring web platform designed for university faculty and students. Join your course with a class code or access the instructor workspace.
         </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto; width: 100%;">
+        <div class="landing-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto; width: 100%;">
           <!-- Student Portal Card -->
           <div class="card" style="background: #ffffff; border-color: var(--primary); text-align: left; padding: 20px;">
             <div style="font-size: 1.5rem;">👨‍🎓</div>
@@ -162,6 +169,8 @@
             <input type="text" id="landing-class-code" placeholder="Enter Class Code (e.g. NYU-CS101)..." style="margin-bottom: 10px;" autocomplete="off" />
             <div id="student-login-error" role="alert" style="color: var(--accent-red); font-size: 0.82rem; font-weight: 700; display: none;">Please enter your first name and last initial.</div>
             <button class="btn-primary" id="btn-enter-student" style="width: 100%;">Enter Course</button>
+            <button class="btn-secondary" id="btn-upload-tutor" style="width: 100%; margin-top: 8px;">📂 Upload .tutor File</button>
+            <input type="file" id="tutor-file-input" accept=".tutor,application/json" hidden />
           </div>
 
           <!-- Instructor Portal Card -->
@@ -317,6 +326,24 @@
           <button class="btn-primary" id="btn-send-chat" style="min-width: 90px; width: auto;">💬 Send</button>
         </div>
       </div>
+
+      <div class="card">
+        <div class="student-grid" style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;">
+          <div>
+            <div class="card-title">📝 Student Notes Pad</div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 3px;">Your notes are saved in this browser as you type and included in your session package.</div>
+          </div>
+          <button class="btn-secondary" id="btn-export-notes">⬇ Export Notes as PDF</button>
+        </div>
+        <textarea id="student-notes" class="notes-pad" placeholder="Capture key ideas, questions, examples, and takeaways..."></textarea>
+      </div>
+
+      <div class="card session-end">
+        <div class="card-title">Ready to wrap up?</div>
+        <p>Package your learning context so you can resume this exact session later.</p>
+        <button class="btn-primary" id="btn-end-session">End Session &amp; Package Knowledge</button>
+        <div id="package-status" role="status" style="font-size: 0.82rem; color: var(--text-muted);"></div>
+      </div>
     </div>
   </main>
 
@@ -337,7 +364,49 @@
     let elevenLabsApiKey = "";
     let activeRole = "student"; // 'student' or 'instructor'
     let currentCourseId = null;
+    let activeCourseSnapshot = null;
     let currentStudentName = sessionStorage.getItem("tutor_bot_student_name") || "";
+    let sessionState = createSessionState();
+
+    function createSessionState() {
+      return { version: 1, startedAt: new Date().toISOString(), transcript: [], notes: "" };
+    }
+
+    function downloadFile(contents, filename, type) {
+      const url = URL.createObjectURL(new Blob([contents], { type }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function safeFilename(value) {
+      return (value || 'tutor-session').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
+    }
+
+    function appendChatMessage(role, text, record = true, timestamp = new Date().toISOString()) {
+      const chatBox = document.getElementById('chat-messages');
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${role === 'student' ? 'student' : 'tutor'}`;
+      const label = document.createElement('strong');
+      label.textContent = role === 'student' ? 'You:' : 'Tutor Bot:';
+      bubble.append(label, ` ${text}`);
+      if (role === 'tutor') {
+        const audioButton = document.createElement('button');
+        audioButton.className = 'audio-play-btn';
+        audioButton.textContent = '🔊';
+        audioButton.type = 'button';
+        audioButton.setAttribute('aria-label', 'Read tutor response aloud');
+        audioButton.onclick = () => playElevenLabsAudio(text);
+        bubble.appendChild(audioButton);
+      }
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      if (record) sessionState.transcript.push({ role, text, timestamp });
+    }
 
     // Default Seed Courses Data
     const defaultCourses = [
@@ -640,7 +709,8 @@
     };
 
     // Student Portal Logic
-    function openStudentPortal(course) {
+    function openStudentPortal(course, resumedSession = null) {
+      activeCourseSnapshot = course;
       showScreen('screen-student');
       document.getElementById('role-badge').innerText = "STUDENT MODE";
       document.getElementById('role-badge').className = "badge badge-primary";
@@ -648,12 +718,6 @@
       document.getElementById('student-class-code-badge').innerText = `CLASS CODE: ${course.code}`;
       document.getElementById('student-course-title').innerText = course.title;
       document.getElementById('chat-messages').innerHTML = "";
-      const welcomeBubble = document.createElement('div');
-      welcomeBubble.className = 'chat-bubble tutor';
-      const welcomeLabel = document.createElement('strong');
-      welcomeLabel.textContent = 'Tutor Bot:';
-      welcomeBubble.append(welcomeLabel, ` Welcome ${currentStudentName}! I am your AI Tutor configured for this course. Select a module above and ask any question to begin our tutoring session!`);
-      document.getElementById('chat-messages').appendChild(welcomeBubble);
 
       const selMod = document.getElementById('sel-student-module');
       selMod.innerHTML = "";
@@ -666,12 +730,24 @@
         selMod.innerHTML = `<option value="">General Course Tutoring</option>`;
       }
 
+      if (resumedSession) {
+        sessionState = resumedSession;
+        document.getElementById('student-notes').value = resumedSession.notes || '';
+        if (resumedSession.learningContext?.moduleId) selMod.value = resumedSession.learningContext.moduleId;
+        if (resumedSession.learningContext?.tutoringMode) document.getElementById('sel-tutoring-mode').value = resumedSession.learningContext.tutoringMode;
+        (resumedSession.transcript || []).forEach(message => appendChatMessage(message.role, message.text, false, message.timestamp));
+      } else {
+        sessionState = createSessionState();
+        document.getElementById('student-notes').value = localStorage.getItem(`tutor_notes_${course.id}`) || '';
+        sessionState.notes = document.getElementById('student-notes').value;
+        appendChatMessage('tutor', `Welcome ${currentStudentName}! I am your AI Tutor configured for this course. Select a module above and ask any question to begin our tutoring session!`);
+      }
       switchStudentModule();
     }
 
     function switchStudentModule() {
       const courses = getCoursesData();
-      const course = courses.find(c => c.id === currentCourseId) || courses[0];
+      const course = activeCourseSnapshot || courses.find(c => c.id === currentCourseId) || courses[0];
       const modId = document.getElementById('sel-student-module').value;
       const mod = course.modules.find(m => m.id === modId) || { title: "General Tutoring Session" };
 
@@ -702,7 +778,10 @@ INSTRUCTOR SCAFFOLDING & HELP LEVEL:
   4. Instructor Directive: ${courseContext.customGuardrails || "None"}.
 
 Instructions:
-Be encouraging, academic, and concise (2-4 sentences max per response). Guide the student according to the configured tutoring mode and guardrails.`;
+Be encouraging, academic, and concise (2-4 sentences max per response). Guide the student according to the configured tutoring mode and guardrails.
+
+SESSION TRANSCRIPT (use this to preserve continuity, including after a restored session):
+${sessionState.transcript.map(message => `${message.role === "student" ? "Student" : "Tutor"}: ${message.text}`).join("\n")}`;
 
       for (const model of GEMINI_MODEL_FALLBACKS) {
         try {
@@ -761,17 +840,11 @@ Be encouraging, academic, and concise (2-4 sentences max per response). Guide th
       input.value = "";
       const chatBox = document.getElementById('chat-messages');
 
-      // Append Student Bubble
-      chatBox.innerHTML += `
-        <div class="chat-bubble student">
-          <strong>You:</strong> ${text}
-        </div>
-      `;
-      chatBox.scrollTop = chatBox.scrollHeight;
+      appendChatMessage('student', text);
 
       // Get Course and Module Context
       const courses = getCoursesData();
-      const course = courses.find(c => c.id === currentCourseId) || courses[0];
+      const course = activeCourseSnapshot || courses.find(c => c.id === currentCourseId) || courses[0];
       const modId = document.getElementById('sel-student-module').value;
       const mod = course.modules.find(m => m.id === modId) || { title: "General", content: "" };
 
@@ -779,14 +852,7 @@ Be encouraging, academic, and concise (2-4 sentences max per response). Guide th
       const reply = await callGeminiTutor(text, course, mod);
 
       // Append Tutor Bubble
-      const replyId = `reply_${Date.now()}`;
-      chatBox.innerHTML += `
-        <div class="chat-bubble tutor">
-          <strong>Tutor Bot:</strong> ${reply}
-          <button class="audio-play-btn" onclick="playElevenLabsAudio('${reply.replace(/'/g, "\\'")}')">🔊</button>
-        </div>
-      `;
-      chatBox.scrollTop = chatBox.scrollHeight;
+      appendChatMessage('tutor', reply);
     };
 
     document.getElementById('student-chat-input').addEventListener('keydown', (e) => {
@@ -796,13 +862,110 @@ Be encouraging, academic, and concise (2-4 sentences max per response). Guide th
     document.getElementById('btn-clear-chat').onclick = () => {
       const chatBox = document.getElementById('chat-messages');
       chatBox.innerHTML = '';
-      const clearedBubble = document.createElement('div');
-      clearedBubble.className = 'chat-bubble tutor';
-      const clearedLabel = document.createElement('strong');
-      clearedLabel.textContent = 'Tutor Bot:';
-      clearedBubble.append(clearedLabel, ` Chat cleared, ${currentStudentName}! Ask any question to continue our session.`);
-      chatBox.appendChild(clearedBubble);
+      sessionState.transcript = [];
+      appendChatMessage('tutor', `Chat cleared, ${currentStudentName}! Ask any question to continue our session.`);
     };
+
+    document.getElementById('student-notes').addEventListener('input', (event) => {
+      sessionState.notes = event.target.value;
+      if (currentCourseId) localStorage.setItem(`tutor_notes_${currentCourseId}`, event.target.value);
+    });
+
+    document.getElementById('btn-export-notes').onclick = () => {
+      if (!window.jspdf?.jsPDF) return alert('The PDF library could not be loaded. Check your internet connection and try again.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const course = activeCourseSnapshot;
+      const moduleTitle = document.getElementById('chat-module-header').textContent;
+      doc.setFontSize(18);
+      doc.text('Tutor Bot — Student Notes', 14, 18);
+      doc.setFontSize(10);
+      doc.text(`Student: ${currentStudentName}`, 14, 27);
+      doc.text(`Course: ${course?.title || 'Course'}`, 14, 33);
+      doc.text(`Module: ${moduleTitle}`, 14, 39);
+      doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 45);
+      doc.setFontSize(11);
+      const lines = doc.splitTextToSize(document.getElementById('student-notes').value || 'No notes recorded.', 182);
+      const linesPerPage = 52;
+      for (let offset = 0; offset < lines.length; offset += linesPerPage) {
+        if (offset) doc.addPage();
+        doc.text(lines.slice(offset, offset + linesPerPage), 14, offset ? 18 : 56);
+      }
+      doc.save(`${safeFilename(course?.code)}-student-notes.pdf`);
+    };
+
+    async function generateMasteryAssessment(course, module) {
+      const dialogue = sessionState.transcript.map(m => `${m.role === 'student' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
+      if (!dialogue.trim()) return 'Insufficient conversation evidence to assess mastery.';
+      const assessmentPrompt = `Assess the student's demonstrated mastery from this tutoring transcript. Return a concise evidence-based summary with: overall level (Beginning, Developing, Proficient, or Advanced), concepts demonstrated, misconceptions or gaps, and recommended next steps. Do not invent evidence.\n\nCourse: ${course.title}\nModule: ${module.title}\nTranscript:\n${dialogue}`;
+      return callGeminiTutor(assessmentPrompt, { ...course, blockAnswers: false, honorCode: false, domainBound: false }, module, 'Assessment');
+    }
+
+    document.getElementById('btn-end-session').onclick = async () => {
+      const button = document.getElementById('btn-end-session');
+      const status = document.getElementById('package-status');
+      const course = activeCourseSnapshot;
+      const moduleId = document.getElementById('sel-student-module').value;
+      const module = course.modules?.find(m => m.id === moduleId) || { id: '', title: 'General Tutoring Session', content: '' };
+      button.disabled = true;
+      status.textContent = 'Creating AI mastery assessment and packaging your session…';
+      try {
+        sessionState.notes = document.getElementById('student-notes').value;
+        const masteryAssessment = await generateMasteryAssessment(course, module);
+        const packagedAt = new Date().toISOString();
+        const tutorPackage = {
+          format: 'tutor-session',
+          version: 1,
+          packagedAt,
+          student: { displayName: currentStudentName },
+          course: JSON.parse(JSON.stringify(course)),
+          learningContext: {
+            courseId: course.id,
+            moduleId: module.id,
+            moduleTitle: module.title,
+            tutoringMode: document.getElementById('sel-tutoring-mode').value
+          },
+          startedAt: sessionState.startedAt,
+          endedAt: packagedAt,
+          transcript: sessionState.transcript,
+          notes: sessionState.notes,
+          masteryAssessment
+        };
+        downloadFile(JSON.stringify(tutorPackage, null, 2), `${safeFilename(course.code)}-${safeFilename(currentStudentName)}.tutor`, 'application/json');
+        status.textContent = 'Session packaged successfully. Keep the .tutor file to resume later.';
+      } catch (error) {
+        status.textContent = 'Could not package this session. Please try again.';
+      } finally {
+        button.disabled = false;
+      }
+    };
+
+    document.getElementById('btn-upload-tutor').onclick = () => document.getElementById('tutor-file-input').click();
+    document.getElementById('tutor-file-input').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (data.format !== 'tutor-session' || data.version !== 1 || !data.student?.displayName || !data.course?.id || !Array.isArray(data.transcript)) {
+          throw new Error('Invalid tutor package');
+        }
+        currentStudentName = data.student.displayName;
+        currentCourseId = data.course.id;
+        sessionStorage.setItem('tutor_bot_student_name', currentStudentName);
+        openStudentPortal(data.course, {
+          version: data.version,
+          startedAt: data.startedAt || new Date().toISOString(),
+          transcript: data.transcript,
+          notes: typeof data.notes === 'string' ? data.notes : '',
+          learningContext: data.learningContext || {},
+          masteryAssessment: data.masteryAssessment || ''
+        });
+        document.getElementById('package-status').textContent = `Resumed session packaged ${data.packagedAt ? new Date(data.packagedAt).toLocaleString() : 'previously'}.`;
+      } catch (error) {
+        alert('This file is not a valid Tutor Bot .tutor session package.');
+      }
+    });
 
     // Auto-load on startup
     window.onload = () => {
