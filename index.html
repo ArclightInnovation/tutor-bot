@@ -172,9 +172,6 @@
     <div class="brand"><span class="brand-mark"><svg class="icon"><use href="#i-academic"/></svg></span><span>Tutor Bot</span></div>
     <div style="display: flex; gap: 8px; align-items: center;">
       <span class="badge badge-primary" id="role-badge">STUDENT MODE</span>
-      <button class="btn-secondary" id="btn-switch-role" style="min-height: 34px; padding: 4px 12px; font-size: 0.8rem;">
-        <svg class="icon icon-sm"><use href="#i-lock"/></svg> Switch Role
-      </button>
     </div>
   </header>
 
@@ -583,10 +580,6 @@
       document.querySelectorAll('.portal-screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
     }
-
-    document.getElementById('btn-switch-role').onclick = () => {
-      showScreen('screen-landing');
-    };
 
     // Landing Screen Handlers
     document.getElementById('btn-enter-student').onclick = () => {
