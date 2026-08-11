@@ -155,7 +155,12 @@
             <div style="font-size: 1.5rem;">👨‍🎓</div>
             <div style="font-weight: 800; font-size: 1.1rem; margin-top: 4px;">Student Portal</div>
             <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 12px 0;">Enter your instructor's class code to access your course modules and tutor.</p>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+              <input type="text" id="landing-first-name" placeholder="First Name" aria-label="First Name" required autocomplete="given-name" />
+              <input type="text" id="landing-last-initial" placeholder="Last Initial" aria-label="Last Initial" required maxlength="1" autocomplete="family-name" />
+            </div>
             <input type="text" id="landing-class-code" placeholder="Enter Class Code (e.g. NYU-CS101)..." style="margin-bottom: 10px;" autocomplete="off" />
+            <div id="student-login-error" role="alert" style="color: var(--accent-red); font-size: 0.82rem; font-weight: 700; display: none;">Please enter your first name and last initial.</div>
             <button class="btn-primary" id="btn-enter-student" style="width: 100%;">Enter Course</button>
           </div>
 
@@ -332,6 +337,7 @@
     let elevenLabsApiKey = "";
     let activeRole = "student"; // 'student' or 'instructor'
     let currentCourseId = null;
+    let currentStudentName = sessionStorage.getItem("tutor_bot_student_name") || "";
 
     // Default Seed Courses Data
     const defaultCourses = [
@@ -427,6 +433,22 @@
 
     // Landing Screen Handlers
     document.getElementById('btn-enter-student').onclick = () => {
+      const firstNameInput = document.getElementById('landing-first-name');
+      const lastInitialInput = document.getElementById('landing-last-initial');
+      const loginError = document.getElementById('student-login-error');
+      const firstName = firstNameInput.value.trim();
+      const lastInitial = lastInitialInput.value.trim().charAt(0).toUpperCase();
+
+      if (!firstName || !lastInitial) {
+        loginError.style.display = 'block';
+        (!firstName ? firstNameInput : lastInitialInput).focus();
+        return;
+      }
+
+      loginError.style.display = 'none';
+      currentStudentName = `${firstName.charAt(0).toUpperCase()}${firstName.slice(1)} ${lastInitial}.`;
+      sessionStorage.setItem("tutor_bot_student_name", currentStudentName);
+
       const inputCode = document.getElementById('landing-class-code').value.trim().toUpperCase();
       const courses = getCoursesData();
       const found = courses.find(c => c.code.toUpperCase() === inputCode) || courses[0];
@@ -625,6 +647,13 @@
 
       document.getElementById('student-class-code-badge').innerText = `CLASS CODE: ${course.code}`;
       document.getElementById('student-course-title').innerText = course.title;
+      document.getElementById('chat-messages').innerHTML = "";
+      const welcomeBubble = document.createElement('div');
+      welcomeBubble.className = 'chat-bubble tutor';
+      const welcomeLabel = document.createElement('strong');
+      welcomeLabel.textContent = 'Tutor Bot:';
+      welcomeBubble.append(welcomeLabel, ` Welcome ${currentStudentName}! I am your AI Tutor configured for this course. Select a module above and ask any question to begin our tutoring session!`);
+      document.getElementById('chat-messages').appendChild(welcomeBubble);
 
       const selMod = document.getElementById('sel-student-module');
       selMod.innerHTML = "";
@@ -659,6 +688,7 @@
 
       const mode = document.getElementById('sel-tutoring-mode').value;
       const systemInstruction = `You are Tutor Bot, an expert university AI tutor configured for the course "${courseContext.title}".
+The student's name is ${currentStudentName}. Address the student by their first name naturally during the tutoring session.
 TUTORING MODE: ${mode}.
 COURSE MODULE MATERIAL:
 ${moduleContext.content || "General course concept guidance."}
@@ -764,11 +794,14 @@ Be encouraging, academic, and concise (2-4 sentences max per response). Guide th
     });
 
     document.getElementById('btn-clear-chat').onclick = () => {
-      document.getElementById('chat-messages').innerHTML = `
-        <div class="chat-bubble tutor">
-          <strong>Tutor Bot:</strong> Chat cleared! Ask any question to continue our session.
-        </div>
-      `;
+      const chatBox = document.getElementById('chat-messages');
+      chatBox.innerHTML = '';
+      const clearedBubble = document.createElement('div');
+      clearedBubble.className = 'chat-bubble tutor';
+      const clearedLabel = document.createElement('strong');
+      clearedLabel.textContent = 'Tutor Bot:';
+      clearedBubble.append(clearedLabel, ` Chat cleared, ${currentStudentName}! Ask any question to continue our session.`);
+      chatBox.appendChild(clearedBubble);
     };
 
     // Auto-load on startup
