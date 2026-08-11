@@ -899,6 +899,27 @@
       return reports;
     }
 
+    const progressReportNames = {
+      profile: 'STUDENT_PROFILE.md',
+      mastery: 'STUDENT_MASTERY.md',
+      analytics: 'STUDENT_ANALYTICS.md'
+    };
+
+    function storeMarkdownReports(markdownReports) {
+      Object.values(progressReportNames).forEach(name => {
+        const content = markdownReports?.[name];
+        if (typeof content !== 'string') return;
+        localStorage.setItem(name, content);
+        sessionStorage.setItem(name, content);
+        localStorage.setItem(`${progressStorageKey()}_${name}`, content);
+      });
+    }
+
+    function getStoredMarkdownReport(type) {
+      const name = progressReportNames[type];
+      return localStorage.getItem(`${progressStorageKey()}_${name}`) || buildProgressReports()[type];
+    }
+
     function switchStudentTab(tab) {
       const progressMode = tab === 'progress';
       document.querySelectorAll('.student-tutor-panel').forEach(panel => panel.style.display = progressMode ? 'none' : 'flex');
@@ -914,12 +935,11 @@
       document.getElementById('progress-sessions').textContent = getStudentProgress().sessions.length;
       document.getElementById('progress-concepts').textContent = reports.concepts;
       const selected = document.getElementById('progress-report-select').value;
-      document.getElementById('progress-markdown').textContent = reports[selected];
+      document.getElementById('progress-markdown').textContent = getStoredMarkdownReport(selected);
     }
 
     function downloadProgressReport(type) {
-      const names = { profile: 'STUDENT_PROFILE.md', mastery: 'STUDENT_MASTERY.md', analytics: 'STUDENT_ANALYTICS.md' };
-      downloadFile(buildProgressReports()[type], names[type], 'text/markdown;charset=utf-8');
+      downloadFile(getStoredMarkdownReport(type), progressReportNames[type], 'text/markdown;charset=utf-8');
     }
 
     // Gemini 3.1 Pro Tutoring Chat Loop
@@ -1088,7 +1108,7 @@ ${buildOptimizedTranscript(sessionState.transcript)}`;
         const existingSession = progress.sessions.findIndex(item => item.sessionId === sessionState.startedAt);
         if (existingSession >= 0) progress.sessions[existingSession] = sessionRecord;
         else progress.sessions.push(sessionRecord);
-        persistProgressReports(progress);
+        const reports = persistProgressReports(progress);
         const tutorPackage = {
           format: 'tutor-session',
           version: 1,
@@ -1105,7 +1125,13 @@ ${buildOptimizedTranscript(sessionState.transcript)}`;
           endedAt: packagedAt,
           transcript: sessionState.transcript,
           notes: sessionState.notes,
-          masteryAssessment
+          masteryAssessment,
+          progress: JSON.parse(JSON.stringify(progress)),
+          markdownReports: {
+            'STUDENT_PROFILE.md': reports.profile,
+            'STUDENT_MASTERY.md': reports.mastery,
+            'STUDENT_ANALYTICS.md': reports.analytics
+          }
         };
         downloadFile(JSON.stringify(tutorPackage, null, 2), `${safeFilename(course.code)}-${safeFilename(currentStudentName)}.tutor`, 'application/json');
         status.textContent = 'Session packaged successfully. Keep the .tutor file to resume later.';
@@ -1137,6 +1163,11 @@ ${buildOptimizedTranscript(sessionState.transcript)}`;
           learningContext: data.learningContext || {},
           masteryAssessment: data.masteryAssessment || ''
         });
+        if (data.progress && Array.isArray(data.progress.sessions) && data.progress.mastery && typeof data.progress.mastery === 'object') {
+          localStorage.setItem(progressStorageKey(), JSON.stringify(data.progress));
+        }
+        storeMarkdownReports(data.markdownReports);
+        renderProgressDashboard();
         document.getElementById('package-status').textContent = `Resumed session packaged ${data.packagedAt ? new Date(data.packagedAt).toLocaleString() : 'previously'}.`;
       } catch (error) {
         alert('This file is not a valid Tutor Bot .tutor session package.');
