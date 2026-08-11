@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Tutor Bot — AI Tutoring Platform for Faculty & Students</title>
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --accent-red: #ef4444;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+    }
+
+    * { box-sizing: border-box; }
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background-color: var(--bg-main); color: var(--text-main);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar */
+    header {
+      background: #ffffff; border-bottom: 1px solid var(--card-border);
+      padding: 12px 20px; display: flex; justify-content: space-between;
+      align-items: center; min-height: 56px; box-shadow: var(--shadow-sm);
+      position: sticky; top: 0; z-index: 1000;
+    }
+    .brand { font-size: 1.15rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    
+    /* Layout Container */
+    main {
+      max-width: 960px; margin: 0 auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
+
+    /* Buttons & Inputs */
+    button.btn-primary {
+      background: var(--primary); color: #ffffff; font-weight: 700;
+      border: none; border-radius: 12px; padding: 12px 20px; font-size: 0.95rem;
+      min-height: 46px; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; transition: background 0.15s ease;
+    }
+    button.btn-primary:hover { background: var(--primary-hover); }
+    button.btn-secondary {
+      background: #f1f5f9; color: var(--text-main); border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 10px 16px; font-size: 0.88rem; font-weight: 600;
+      min-height: 42px; cursor: pointer;
+    }
+    button.btn-secondary:hover { background: #e2e8f0; }
+
+    input, select, textarea {
+      width: 100%; padding: 12px 14px; background: #ffffff;
+      border: 1px solid var(--card-border); color: var(--text-main);
+      border-radius: 10px; font-size: 15px; outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+    textarea { min-height: 100px; resize: vertical; }
+
+    /* Badges */
+    .badge {
+      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .badge-primary { background: var(--primary-light); color: var(--primary); }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+
+    /* Chat Messages */
+    .chat-box {
+      width: 100%; height: 380px; background: #f8fafc; border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 16px; overflow-y: auto; display: flex;
+      flex-direction: column; gap: 12px;
+    }
+    .chat-bubble {
+      max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 0.92rem;
+      line-height: 1.5; word-wrap: break-word;
+    }
+    .chat-bubble.student {
+      align-self: flex-end; background: var(--primary); color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+    .chat-bubble.tutor {
+      align-self: flex-start; background: #ffffff; border: 1px solid var(--card-border);
+      color: var(--text-main); border-bottom-left-radius: 2px; box-shadow: var(--shadow-sm);
+    }
+    .audio-play-btn {
+      background: var(--primary-light); color: var(--primary); border: none;
+      border-radius: 50%; width: 28px; height: 28px; font-size: 0.75rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; margin-left: 8px; vertical-align: middle;
+    }
+
+    /* Navigation Tabs */
+    .tab-bar { display: flex; gap: 8px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; }
+    .tab-btn {
+      background: transparent; border: none; padding: 8px 16px; font-weight: 700;
+      font-size: 0.9rem; color: var(--text-muted); cursor: pointer; border-radius: 8px;
+    }
+    .tab-btn.active { background: var(--primary-light); color: var(--primary); }
+
+    /* Screen Views */
+    .portal-screen { display: none; flex-direction: column; gap: 20px; }
+    .portal-screen.active { display: flex; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand">🎓 Tutor Bot</div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="badge badge-primary" id="role-badge">STUDENT MODE</span>
+      <button class="btn-secondary" id="btn-switch-role" style="min-height: 34px; padding: 4px 12px; font-size: 0.8rem;">
+        🔐 Switch Role
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. LANDING & ACCESS SELECTION -->
+    <div id="screen-landing" class="portal-screen active">
+      <div class="card" style="text-align: center; padding: 40px 24px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">🎓</div>
+        <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary);">Welcome to Tutor Bot</div>
+        <p style="color: var(--text-muted); max-width: 500px; margin: 8px auto 24px auto; font-size: 0.95rem;">
+          An AI tutoring web platform designed for university faculty and students. Join your course with a class code or access the instructor workspace.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto; width: 100%;">
+          <!-- Student Portal Card -->
+          <div class="card" style="background: #ffffff; border-color: var(--primary); text-align: left; padding: 20px;">
+            <div style="font-size: 1.5rem;">👨‍🎓</div>
+            <div style="font-weight: 800; font-size: 1.1rem; margin-top: 4px;">Student Portal</div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 12px 0;">Enter your instructor's class code to access your course modules and tutor.</p>
+            <input type="text" id="landing-class-code" placeholder="Enter Class Code (e.g. NYU-CS101)..." style="margin-bottom: 10px;" autocomplete="off" />
+            <button class="btn-primary" id="btn-enter-student" style="width: 100%;">Enter Course</button>
+          </div>
+
+          <!-- Instructor Portal Card -->
+          <div class="card" style="background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%); color: #ffffff; text-align: left; padding: 20px;">
+            <div style="font-size: 1.5rem;">🎓</div>
+            <div style="font-weight: 800; font-size: 1.1rem; margin-top: 4px;">Faculty Workspace</div>
+            <p style="font-size: 0.82rem; opacity: 0.85; margin: 4px 0 12px 0;">Manage courses, upload sectioned modules, set help scaffolding, and configure AI guardrails.</p>
+            <button class="btn-primary" id="btn-enter-instructor" style="width: 100%; background: #ffffff; color: var(--primary);">Faculty Login 🔒</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. INSTRUCTOR AUTHENTICATION MODAL -->
+    <div id="screen-faculty-auth" class="portal-screen">
+      <div class="card" style="max-width: 440px; margin: 40px auto; text-align: center; width: 100%;">
+        <div style="font-size: 2.5rem;">🔒</div>
+        <div class="card-title">Faculty Security Gate</div>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 4px 0 16px 0;">Enter your instructor passcode to unlock the faculty workspace:</p>
+        <input type="password" id="faculty-passcode" placeholder="Enter security passcode..." autocomplete="off" />
+        <div id="faculty-auth-error" style="color: var(--accent-red); font-size: 0.82rem; font-weight: 700; display: none;">❌ Invalid Security Passcode</div>
+        <button class="btn-primary" id="btn-unlock-faculty">Unlock Instructor Portal</button>
+        <button class="btn-secondary" onclick="showScreen('screen-landing')">Back to Portals</button>
+      </div>
+    </div>
+
+    <!-- 3. INSTRUCTOR WORKSPACE PORTAL -->
+    <div id="screen-instructor" class="portal-screen">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchInstructorTab('tab-classes')">📚 Courses & Class Codes</button>
+        <button class="tab-btn" onclick="switchInstructorTab('tab-modules')">📖 Sectioned Modules</button>
+        <button class="tab-btn" onclick="switchInstructorTab('tab-guardrails')">🛡️ AI Scaffolding & Guardrails</button>
+      </div>
+
+      <!-- Tab A: Courses & Class Codes -->
+      <div id="tab-classes" class="card">
+        <div class="card-title">📚 Course Management & Access Codes</div>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Create new courses. Each course generates a unique Class Code for student login.</p>
+
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <input type="text" id="new-course-title" placeholder="New Course Title (e.g. NYU CS101 - Intro to AI)..." />
+          <button class="btn-primary" id="btn-create-course" style="white-space: nowrap;">＋ Create Course</button>
+        </div>
+
+        <div id="course-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <!-- Course Items Rendered Live -->
+        </div>
+      </div>
+
+      <!-- Tab B: Sectioned Modules -->
+      <div id="tab-modules" class="card" style="display: none;">
+        <div class="card-title">📖 Sectioned Course Modules</div>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Select a course and upload sectioned modules, lecture notes, or readings.</p>
+
+        <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Select Course:</label>
+        <select id="sel-instructor-course" onchange="renderInstructorModules()"></select>
+
+        <div style="background: #f8fafc; border: 1px solid var(--card-border); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-weight: 700; font-size: 0.95rem; color: var(--primary);">＋ Add New Module</div>
+          <input type="text" id="new-module-title" placeholder="Module Title (e.g. Module 1: Socratic Logic & Ethics)..." />
+          <input type="text" id="new-module-desc" placeholder="Brief Summary (e.g. Fundamentals of guided reasoning)..." />
+          <textarea id="new-module-content" placeholder="Paste module readings, lecture content, or syllabus guidelines..."></textarea>
+          <button class="btn-primary" id="btn-save-module">Save Module</button>
+        </div>
+
+        <div id="module-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;"></div>
+      </div>
+
+      <!-- Tab C: AI Scaffolding & Guardrails -->
+      <div id="tab-guardrails" class="card" style="display: none;">
+        <div class="card-title">🛡️ AI Scaffolding & Safety Guardrails</div>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Configure how much assistance the AI Tutor provides and establish enforcement rules.</p>
+
+        <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Select Course to Configure:</label>
+        <select id="sel-guardrail-course" onchange="loadCourseGuardrailSettings()"></select>
+
+        <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Tutoring Help Level / Scaffolding:</label>
+        <select id="sel-help-level">
+          <option value="socratic">🧠 Minimal Hints (High Independence - Socratic Questions Only)</option>
+          <option value="balanced" selected>⚖️ Balanced Guidance (Nudges & Partial Explanations)</option>
+          <option value="step-by-step">📖 Full Step-by-Step Walkthroughs</option>
+        </select>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="chk-block-answers" checked style="width: auto;" />
+            🛡️ Block Direct Answer Dumps (Forces student reasoning)
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="chk-honor-code" checked style="width: auto;" />
+            📜 Enforce Academic Honor Code (Refuse exam/essay ghostwriting)
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="chk-domain-bound" checked style="width: auto;" />
+            🎯 Restrict to Course Domain Topics (Redirect off-topic queries)
+          </label>
+        </div>
+
+        <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-top: 8px;">Custom Instructor Rules & System Directives:</label>
+        <textarea id="txt-custom-guardrails" placeholder="e.g. Always remind students to cite peer-reviewed literature in APA format..."></textarea>
+
+        <button class="btn-primary" id="btn-save-guardrails">Save Guardrail Settings</button>
+      </div>
+    </div>
+
+    <!-- 4. STUDENT TUTORING PORTAL -->
+    <div id="screen-student" class="portal-screen">
+      <!-- Course Banner -->
+      <div class="card" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-color: #c7d2fe;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span class="badge badge-primary" id="student-class-code-badge">CODE: NYU-CS101</span>
+            <div style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;" id="student-course-title">NYU CS101 — Intro to Artificial Intelligence</div>
+          </div>
+          <button class="btn-secondary" onclick="showScreen('screen-landing')" style="min-height: 36px; font-size: 0.8rem;">Change Class</button>
+        </div>
+      </div>
+
+      <!-- Module & Mode Selector Card -->
+      <div class="card">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Select Study Module:</label>
+            <select id="sel-student-module" onchange="switchStudentModule()"></select>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Tutoring Mode:</label>
+            <select id="sel-tutoring-mode" onchange="switchStudentModule()">
+              <option value="Socratic Tutor 🧠">🧠 Socratic Tutor (Questions & Guidance)</option>
+              <option value="Practice Quizmaster ❓">❓ Practice Quizmaster (Interactive Drill)</option>
+              <option value="Friendly Mentor 🤝">🤝 Friendly Mentor (Conversational Nudges)</option>
+              <option value="Direct Instructor 🎓">🎓 Direct Instructor (Academic Style)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Interface Card -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="card-title" id="chat-module-header">Module 1: Introduction & Socratic Logic</div>
+          <button class="btn-secondary" id="btn-clear-chat" style="min-height: 32px; padding: 2px 8px; font-size: 0.78rem;">Clear Chat</button>
+        </div>
+
+        <div class="chat-box" id="chat-messages">
+          <div class="chat-bubble tutor">
+            <strong>Tutor Bot:</strong> Welcome! I am your AI Tutor configured for this course. Select a module above and ask any question to begin our tutoring session!
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="student-chat-input" placeholder="Type your question or response here..." autocomplete="off" />
+          <button class="btn-primary" id="btn-send-chat" style="min-width: 90px; width: auto;">💬 Send</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // SHA-256 Security Hash & Encrypted Key Ciphers
+    const TARGET_SHA256_HASH = "17d5e54eebd3eec11776c65244d202834334929674c414f2d19b67bdb541d803";
+    const ENCRYPTED_GEMINI_KEY_CIPHER = "AD9KKBhCPisHdWpeXXgKZEJ5AQBdQzMJE0EAFAVDRGYbWHU4NQ4fTDsgVlwBZHNaRVd2OS8=";
+    const ENCRYPTED_ELEVEN_KEY_CIPHER = "MgU7XRhNWwcHAF0DCwBRDkd4WVAMSE4PAwFYDQhRUgcDQCVWUQgeQwgBVVoAA1MEAlIR";
+
+    const GEMINI_MODEL_FALLBACKS = [
+      "gemini-3.1-pro-preview",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-flash-latest"
+    ];
+
+    let geminiApiKey = "";
+    let elevenLabsApiKey = "";
+    let activeRole = "student"; // 'student' or 'instructor'
+    let currentCourseId = null;
+
+    // Default Seed Courses Data
+    const defaultCourses = [
+      {
+        id: "c_nyu_cs101",
+        title: "NYU CS101 — Intro to Artificial Intelligence",
+        code: "NYU-CS101",
+        helpLevel: "balanced",
+        blockAnswers: true,
+        honorCode: true,
+        domainBound: true,
+        customGuardrails: "Encourage students to break down algorithms step-by-step.",
+        modules: [
+          {
+            id: "m_cs101_1",
+            title: "Module 1: Foundations of Search & Problem Solving",
+            desc: "Breadth-First Search, Depth-First Search, and A* Heuristics",
+            content: "Search algorithms explore problem spaces using nodes and edges. BFS uses FIFO queue ensuring shortest path in unweighted graphs. DFS uses LIFO stack. A* search incorporates heuristic function f(n) = g(n) + h(n)."
+          },
+          {
+            id: "m_cs101_2",
+            title: "Module 2: Machine Learning & Neural Networks",
+            desc: "Supervised Learning, Loss Functions, and Gradient Descent",
+            content: "Supervised learning trains models on labeled datasets. Gradient descent updates weights W = W - alpha * dL/dW to minimize loss function."
+          }
+        ]
+      },
+      {
+        id: "c_nyu_psych201",
+        title: "NYU PSYCH201 — Cognitive Psychology",
+        code: "NYU-PSYCH201",
+        helpLevel: "socratic",
+        blockAnswers: true,
+        honorCode: true,
+        domainBound: true,
+        customGuardrails: "Ask students to ground claims in empirical psychological experiments.",
+        modules: [
+          {
+            id: "m_psych_1",
+            title: "Module 1: Memory & Cognitive Architecture",
+            desc: "Working Memory Model (Baddeley) and Spaced Retrieval",
+            content: "Working memory comprises Central Executive, Phonological Loop, and Visuospatial Sketchpad. Spaced retrieval enhances long-term memory consolidation."
+          }
+        ]
+      }
+    ];
+
+    // LocalStorage Helper
+    function getCoursesData() {
+      try {
+        const saved = localStorage.getItem("tutor_bot_courses");
+        return saved ? JSON.parse(saved) : defaultCourses;
+      } catch(e) {
+        return defaultCourses;
+      }
+    }
+
+    function saveCoursesData(courses) {
+      localStorage.setItem("tutor_bot_courses", JSON.stringify(courses));
+    }
+
+    // Cryptographic Helpers
+    async function computeSHA256(str) {
+      const msgBuffer = new TextEncoder().encode(str);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function xorDecrypt(cipherB64, keyStr) {
+      try {
+        const keyBytes = new TextEncoder().encode(keyStr);
+        const binaryStr = atob(cipherB64);
+        const decrypted = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          decrypted[i] = binaryStr.charCodeAt(i) ^ keyBytes[i % keyBytes.length];
+        }
+        return new TextDecoder().decode(decrypted);
+      } catch (e) {
+        return "";
+      }
+    }
+
+    // Navigation Screen Switcher
+    function showScreen(screenId) {
+      document.querySelectorAll('.portal-screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    document.getElementById('btn-switch-role').onclick = () => {
+      showScreen('screen-landing');
+    };
+
+    // Landing Screen Handlers
+    document.getElementById('btn-enter-student').onclick = () => {
+      const inputCode = document.getElementById('landing-class-code').value.trim().toUpperCase();
+      const courses = getCoursesData();
+      const found = courses.find(c => c.code.toUpperCase() === inputCode) || courses[0];
+      
+      currentCourseId = found.id;
+      openStudentPortal(found);
+    };
+
+    document.getElementById('btn-enter-instructor').onclick = () => {
+      showScreen('screen-faculty-auth');
+    };
+
+    // Faculty Authentication Gate
+    document.getElementById('btn-unlock-faculty').onclick = async () => {
+      const pass = document.getElementById('faculty-passcode').value.trim();
+      const err = document.getElementById('faculty-auth-error');
+      
+      const computedHash = await computeSHA256(pass);
+      if (computedHash === TARGET_SHA256_HASH) {
+        geminiApiKey = xorDecrypt(ENCRYPTED_GEMINI_KEY_CIPHER, pass);
+        elevenLabsApiKey = xorDecrypt(ENCRYPTED_ELEVEN_KEY_CIPHER, pass);
+        
+        err.style.display = 'none';
+        document.getElementById('role-badge').innerText = "FACULTY WORKSPACE";
+        document.getElementById('role-badge').className = "badge badge-success";
+        
+        openInstructorPortal();
+      } else {
+        err.style.display = 'block';
+      }
+    };
+
+    // Instructor Portal Logic
+    function openInstructorPortal() {
+      showScreen('screen-instructor');
+      renderInstructorCourses();
+      renderInstructorModules();
+      loadCourseGuardrailSettings();
+    }
+
+    function switchInstructorTab(tabId) {
+      document.querySelectorAll('#screen-instructor .tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.getElementById('tab-classes').style.display = tabId === 'tab-classes' ? 'flex' : 'none';
+      document.getElementById('tab-modules').style.display = tabId === 'tab-modules' ? 'flex' : 'none';
+      document.getElementById('tab-guardrails').style.display = tabId === 'tab-guardrails' ? 'flex' : 'none';
+    }
+
+    function renderInstructorCourses() {
+      const courses = getCoursesData();
+      const container = document.getElementById('course-list-container');
+      const selModule = document.getElementById('sel-instructor-course');
+      const selGuardrail = document.getElementById('sel-guardrail-course');
+
+      container.innerHTML = "";
+      selModule.innerHTML = "";
+      selGuardrail.innerHTML = "";
+
+      courses.forEach(c => {
+        container.innerHTML += `
+          <div class="card" style="padding: 14px; background: #f8fafc; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 800; color: var(--text-main);">${c.title}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Class Access Code: <strong style="color: var(--primary);">${c.code}</strong> | ${c.modules.length} Modules</div>
+            </div>
+            <button class="btn-secondary" onclick="deleteCourse('${c.id}')" style="color: var(--accent-red); padding: 4px 10px; font-size: 0.78rem;">Delete</button>
+          </div>
+        `;
+
+        selModule.innerHTML += `<option value="${c.id}">${c.title} (${c.code})</option>`;
+        selGuardrail.innerHTML += `<option value="${c.id}">${c.title} (${c.code})</option>`;
+      });
+    }
+
+    document.getElementById('btn-create-course').onclick = () => {
+      const title = document.getElementById('new-course-title').value.trim();
+      if (!title) return;
+
+      const courses = getCoursesData();
+      const code = `NYU-${Math.floor(100 + Math.random() * 900)}`;
+      const newCourse = {
+        id: `c_${Date.now()}`,
+        title: title,
+        code: code,
+        helpLevel: "balanced",
+        blockAnswers: true,
+        honorCode: true,
+        domainBound: true,
+        customGuardrails: "",
+        modules: []
+      };
+
+      courses.push(newCourse);
+      saveCoursesData(courses);
+      document.getElementById('new-course-title').value = "";
+      renderInstructorCourses();
+      alert(`Course created successfully!\nStudent Class Access Code: ${code}`);
+    };
+
+    function deleteCourse(courseId) {
+      if (!confirm("Are you sure you want to delete this course?")) return;
+      let courses = getCoursesData();
+      courses = courses.filter(c => c.id !== courseId);
+      saveCoursesData(courses);
+      renderInstructorCourses();
+    }
+
+    // Sectioned Modules Management
+    function renderInstructorModules() {
+      const courses = getCoursesData();
+      const selectedId = document.getElementById('sel-instructor-course').value || courses[0]?.id;
+      const found = courses.find(c => c.id === selectedId);
+      const container = document.getElementById('module-list-container');
+
+      container.innerHTML = "";
+      if (!found || !found.modules.length) {
+        container.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">No modules uploaded for this course yet.</div>`;
+        return;
+      }
+
+      found.modules.forEach((m, idx) => {
+        container.innerHTML += `
+          <div class="card" style="padding: 14px; background: #ffffff;">
+            <div style="font-weight: 800; color: var(--primary);">${m.title}</div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin: 2px 0;">${m.desc}</div>
+            <div style="font-size: 0.78rem; color: var(--text-main); background: #f8fafc; padding: 8px; border-radius: 6px; margin-top: 4px;">${m.content.substring(0, 120)}...</div>
+          </div>
+        `;
+      });
+    }
+
+    document.getElementById('btn-save-module').onclick = () => {
+      const courses = getCoursesData();
+      const selectedId = document.getElementById('sel-instructor-course').value;
+      const title = document.getElementById('new-module-title').value.trim();
+      const desc = document.getElementById('new-module-desc').value.trim();
+      const content = document.getElementById('new-module-content').value.trim();
+
+      if (!title || !content) return alert("Please fill in both Module Title and Module Content.");
+
+      const course = courses.find(c => c.id === selectedId);
+      if (course) {
+        course.modules.push({
+          id: `m_${Date.now()}`,
+          title: title,
+          desc: desc,
+          content: content
+        });
+        saveCoursesData(courses);
+        document.getElementById('new-module-title').value = "";
+        document.getElementById('new-module-desc').value = "";
+        document.getElementById('new-module-content').value = "";
+        renderInstructorModules();
+        alert("Course Module saved successfully!");
+      }
+    };
+
+    // AI Guardrail Configuration
+    function loadCourseGuardrailSettings() {
+      const courses = getCoursesData();
+      const selectedId = document.getElementById('sel-guardrail-course').value || courses[0]?.id;
+      const course = courses.find(c => c.id === selectedId);
+
+      if (course) {
+        document.getElementById('sel-help-level').value = course.helpLevel || "balanced";
+        document.getElementById('chk-block-answers').checked = course.blockAnswers !== false;
+        document.getElementById('chk-honor-code').checked = course.honorCode !== false;
+        document.getElementById('chk-domain-bound').checked = course.domainBound !== false;
+        document.getElementById('txt-custom-guardrails').value = course.customGuardrails || "";
+      }
+    }
+
+    document.getElementById('btn-save-guardrails').onclick = () => {
+      const courses = getCoursesData();
+      const selectedId = document.getElementById('sel-guardrail-course').value;
+      const course = courses.find(c => c.id === selectedId);
+
+      if (course) {
+        course.helpLevel = document.getElementById('sel-help-level').value;
+        course.blockAnswers = document.getElementById('chk-block-answers').checked;
+        course.honorCode = document.getElementById('chk-honor-code').checked;
+        course.domainBound = document.getElementById('chk-domain-bound').checked;
+        course.customGuardrails = document.getElementById('txt-custom-guardrails').value.trim();
+
+        saveCoursesData(courses);
+        alert("AI Guardrails & Help Scaffolding settings saved!");
+      }
+    };
+
+    // Student Portal Logic
+    function openStudentPortal(course) {
+      showScreen('screen-student');
+      document.getElementById('role-badge').innerText = "STUDENT MODE";
+      document.getElementById('role-badge').className = "badge badge-primary";
+
+      document.getElementById('student-class-code-badge').innerText = `CLASS CODE: ${course.code}`;
+      document.getElementById('student-course-title').innerText = course.title;
+
+      const selMod = document.getElementById('sel-student-module');
+      selMod.innerHTML = "";
+
+      if (course.modules && course.modules.length) {
+        course.modules.forEach(m => {
+          selMod.innerHTML += `<option value="${m.id}">${m.title}</option>`;
+        });
+      } else {
+        selMod.innerHTML = `<option value="">General Course Tutoring</option>`;
+      }
+
+      switchStudentModule();
+    }
+
+    function switchStudentModule() {
+      const courses = getCoursesData();
+      const course = courses.find(c => c.id === currentCourseId) || courses[0];
+      const modId = document.getElementById('sel-student-module').value;
+      const mod = course.modules.find(m => m.id === modId) || { title: "General Tutoring Session" };
+
+      document.getElementById('chat-module-header').innerText = mod.title;
+    }
+
+    // Gemini 3.1 Pro Tutoring Chat Loop
+    async function callGeminiTutor(promptText, courseContext, moduleContext, tutoringMode) {
+      if (!geminiApiKey) {
+        const pass = "Andizzle19902026!";
+        geminiApiKey = xorDecrypt(ENCRYPTED_GEMINI_KEY_CIPHER, pass);
+        elevenLabsApiKey = xorDecrypt(ENCRYPTED_ELEVEN_KEY_CIPHER, pass);
+      }
+
+      const mode = document.getElementById('sel-tutoring-mode').value;
+      const systemInstruction = `You are Tutor Bot, an expert university AI tutor configured for the course "${courseContext.title}".
+TUTORING MODE: ${mode}.
+COURSE MODULE MATERIAL:
+${moduleContext.content || "General course concept guidance."}
+
+INSTRUCTOR SCAFFOLDING & HELP LEVEL:
+- Help Level: ${courseContext.helpLevel || "balanced"}.
+- Guardrails:
+  1. Block direct answer dumps: ${courseContext.blockAnswers ? "ENABLED (Never solve homework directly, ask questions to guide student)" : "DISABLED"}.
+  2. Academic Honor Code: ${courseContext.honorCode ? "ENABLED (Refuse essay writing or exam cheating)" : "DISABLED"}.
+  3. Domain Boundaries: ${courseContext.domainBound ? "ENABLED (Focus strictly on course domain)" : "DISABLED"}.
+  4. Instructor Directive: ${courseContext.customGuardrails || "None"}.
+
+Instructions:
+Be encouraging, academic, and concise (2-4 sentences max per response). Guide the student according to the configured tutoring mode and guardrails.`;
+
+      for (const model of GEMINI_MODEL_FALLBACKS) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+          const payload = {
+            contents: [{ parts: [{ text: `${systemInstruction}\n\nStudent Question: ${promptText}` }] }]
+          };
+
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (reply) return reply;
+          }
+        } catch(e) {}
+      }
+
+      return "Great question! Let's think about this step-by-step. What do you think is the first key concept here?";
+    }
+
+    // Play ElevenLabs Audio Response
+    async function playElevenLabsAudio(text) {
+      if (!elevenLabsApiKey) return;
+      try {
+        const url = "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL";
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'xi-api-key': elevenLabsApiKey
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: "eleven_multilingual_v2"
+          })
+        });
+
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const audio = new Audio(URL.createObjectURL(blob));
+          audio.play();
+        }
+      } catch(e) {}
+    }
+
+    document.getElementById('btn-send-chat').onclick = async () => {
+      const input = document.getElementById('student-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = "";
+      const chatBox = document.getElementById('chat-messages');
+
+      // Append Student Bubble
+      chatBox.innerHTML += `
+        <div class="chat-bubble student">
+          <strong>You:</strong> ${text}
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Get Course and Module Context
+      const courses = getCoursesData();
+      const course = courses.find(c => c.id === currentCourseId) || courses[0];
+      const modId = document.getElementById('sel-student-module').value;
+      const mod = course.modules.find(m => m.id === modId) || { title: "General", content: "" };
+
+      // Call Gemini AI Tutor
+      const reply = await callGeminiTutor(text, course, mod);
+
+      // Append Tutor Bubble
+      const replyId = `reply_${Date.now()}`;
+      chatBox.innerHTML += `
+        <div class="chat-bubble tutor">
+          <strong>Tutor Bot:</strong> ${reply}
+          <button class="audio-play-btn" onclick="playElevenLabsAudio('${reply.replace(/'/g, "\\'")}')">🔊</button>
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    document.getElementById('student-chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-send-chat').click();
+    });
+
+    document.getElementById('btn-clear-chat').onclick = () => {
+      document.getElementById('chat-messages').innerHTML = `
+        <div class="chat-bubble tutor">
+          <strong>Tutor Bot:</strong> Chat cleared! Ask any question to continue our session.
+        </div>
+      `;
+    };
+
+    // Auto-load on startup
+    window.onload = () => {
+      const pass = "Andizzle19902026!";
+      geminiApiKey = xorDecrypt(ENCRYPTED_GEMINI_KEY_CIPHER, pass);
+      elevenLabsApiKey = xorDecrypt(ENCRYPTED_ELEVEN_KEY_CIPHER, pass);
+    };
+  </script>
+</body>
+</html>
