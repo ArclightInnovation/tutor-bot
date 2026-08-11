@@ -7,19 +7,19 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     :root {
-      --bg-main: #f8fafc;
+      --bg-main: #f5f7fa;
       --card-bg: #ffffff;
       --card-border: #e2e8f0;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --primary-light: #eef2ff;
+      --primary: #173f6b;
+      --primary-hover: #0f3157;
+      --primary-light: #eaf1f8;
       --accent-green: #10b981;
       --accent-amber: #f59e0b;
       --accent-purple: #8b5cf6;
       --accent-red: #ef4444;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+      --text-main: #172033;
+      --text-muted: #5f6f82;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
       --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.03);
       --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
     }
@@ -28,61 +28,68 @@
     body, html {
       margin: 0; padding: 0; width: 100%; height: 100%;
       background-color: var(--bg-main); color: var(--text-main);
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px; line-height: 1.55; letter-spacing: -0.005em;
       overflow-x: hidden;
     }
 
     /* Top Bar */
     header {
       background: #ffffff; border-bottom: 1px solid var(--card-border);
-      padding: 12px 20px; display: flex; justify-content: space-between;
-      align-items: center; min-height: 56px; box-shadow: var(--shadow-sm);
+      padding: 0 28px; display: flex; justify-content: space-between;
+      align-items: center; min-height: 64px;
       position: sticky; top: 0; z-index: 1000;
     }
-    .brand { font-size: 1.15rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .brand { font-size: 1.05rem; font-weight: 750; color: var(--text-main); display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; color: white; background: var(--primary); border-radius: 8px; }
+    .icon { width: 18px; height: 18px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-sm { width: 15px; height: 15px; }
+    .icon-lg { width: 28px; height: 28px; }
+    .section-icon { width: 44px; height: 44px; display: grid; place-items: center; color: var(--primary); background: var(--primary-light); border: 1px solid #d5e2ef; border-radius: 10px; }
     
     /* Layout Container */
     main {
-      max-width: 960px; margin: 0 auto; padding: 20px;
-      display: flex; flex-direction: column; gap: 20px;
+      max-width: 1040px; margin: 0 auto; padding: 32px 24px 56px;
+      display: flex; flex-direction: column; gap: 24px;
     }
 
     /* Cards */
     .card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);
-      display: flex; flex-direction: column; gap: 14px;
+      border-radius: 10px; padding: 24px; box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
+    .card-title { font-size: 1.08rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.015em; display: flex; align-items: center; gap: 9px; }
 
     /* Buttons & Inputs */
     button.btn-primary {
-      background: var(--primary); color: #ffffff; font-weight: 700;
-      border: none; border-radius: 12px; padding: 12px 20px; font-size: 0.95rem;
-      min-height: 46px; cursor: pointer; display: inline-flex; align-items: center;
-      justify-content: center; gap: 8px; transition: background 0.15s ease;
+      background: var(--primary); color: #ffffff; font-weight: 650;
+      border: 1px solid var(--primary); border-radius: 7px; padding: 10px 17px; font-size: 0.9rem;
+      min-height: 42px; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; transition: background 0.15s ease, box-shadow .15s ease, transform .15s ease;
     }
-    button.btn-primary:hover { background: var(--primary-hover); }
+    button.btn-primary:hover { background: var(--primary-hover); box-shadow: 0 3px 8px rgba(23,63,107,.16); }
     button.btn-secondary {
       background: #f1f5f9; color: var(--text-main); border: 1px solid var(--card-border);
-      border-radius: 12px; padding: 10px 16px; font-size: 0.88rem; font-weight: 600;
-      min-height: 42px; cursor: pointer;
+      border-radius: 7px; padding: 9px 14px; font-size: 0.86rem; font-weight: 600;
+      min-height: 42px; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 7px;
     }
     button.btn-secondary:hover { background: #e2e8f0; }
 
     input, select, textarea {
       width: 100%; padding: 12px 14px; background: #ffffff;
       border: 1px solid var(--card-border); color: var(--text-main);
-      border-radius: 10px; font-size: 15px; outline: none;
+      border-radius: 7px; font-size: 14px; outline: none; min-height: 42px;
     }
     input:focus, select:focus, textarea:focus {
-      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(23, 63, 107, 0.1);
     }
     textarea { min-height: 100px; resize: vertical; }
 
     /* Badges */
     .badge {
-      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+      padding: 4px 9px; border-radius: 5px; font-size: 0.68rem; font-weight: 750; letter-spacing: .055em;
       display: inline-flex; align-items: center; gap: 4px;
     }
     .badge-primary { background: var(--primary-light); color: var(--primary); }
@@ -91,61 +98,82 @@
 
     /* Chat Messages */
     .chat-box {
-      width: 100%; height: 380px; background: #f8fafc; border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 16px; overflow-y: auto; display: flex;
+      width: 100%; height: 400px; background: #f7f9fc; border: 1px solid var(--card-border);
+      border-radius: 9px; padding: 20px; overflow-y: auto; display: flex;
       flex-direction: column; gap: 12px;
     }
     .chat-bubble {
-      max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 0.92rem;
+      max-width: 78%; padding: 12px 15px; border-radius: 9px; font-size: 0.9rem;
       line-height: 1.5; word-wrap: break-word;
     }
     .chat-bubble.student {
       align-self: flex-end; background: var(--primary); color: #ffffff;
-      border-bottom-right-radius: 2px;
+      border-bottom-right-radius: 3px;
     }
     .chat-bubble.tutor {
       align-self: flex-start; background: #ffffff; border: 1px solid var(--card-border);
-      color: var(--text-main); border-bottom-left-radius: 2px; box-shadow: var(--shadow-sm);
+      color: var(--text-main); border-bottom-left-radius: 3px; box-shadow: var(--shadow-sm);
     }
     .audio-play-btn {
       background: var(--primary-light); color: var(--primary); border: none;
-      border-radius: 50%; width: 28px; height: 28px; font-size: 0.75rem;
+      border-radius: 6px; width: 30px; height: 30px; font-size: 0.75rem;
       display: inline-flex; align-items: center; justify-content: center;
       cursor: pointer; margin-left: 8px; vertical-align: middle;
     }
 
     /* Navigation Tabs */
-    .tab-bar { display: flex; gap: 8px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; }
+    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--card-border); padding: 0; overflow-x: auto; }
     .tab-btn {
-      background: transparent; border: none; padding: 8px 16px; font-weight: 700;
-      font-size: 0.9rem; color: var(--text-muted); cursor: pointer; border-radius: 8px;
+      background: transparent; border: none; border-bottom: 2px solid transparent; padding: 11px 14px; font-weight: 600;
+      font-size: 0.86rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
     }
-    .tab-btn.active { background: var(--primary-light); color: var(--primary); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
     /* Screen Views */
     .portal-screen { display: none; flex-direction: column; gap: 20px; }
     .portal-screen.active { display: flex; }
     .notes-pad { min-height: 150px; line-height: 1.55; background: #fffef7; border-color: #fde68a; }
-    .session-end { border: 1px solid #c7d2fe; background: linear-gradient(135deg, #f5f3ff, #eef2ff); text-align: center; }
+    .session-end { border: 1px solid #cbd9e7; background: linear-gradient(135deg, #f8fbfe, #edf3f8); text-align: center; }
     .session-end p { margin: 0; color: var(--text-muted); font-size: 0.88rem; }
     .progress-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .metric { background: #f8fafc; border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; text-align: center; }
+    .metric { background: #f8fafc; border: 1px solid var(--card-border); border-radius: 8px; padding: 18px; text-align: center; }
     .metric-value { color: var(--primary); font-size: 1.6rem; font-weight: 800; }
     .markdown-preview { white-space: pre-wrap; background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 16px; max-height: 300px; overflow: auto; font: 0.8rem/1.5 ui-monospace, monospace; }
     @media (max-width: 680px) {
       .student-grid, .landing-grid { grid-template-columns: 1fr !important; }
+      header { padding: 0 16px; }
+      main { padding: 20px 14px 40px; }
+      .card { padding: 18px; }
+      .progress-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-academic" viewBox="0 0 24 24"><path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2.2 7 2.2 10 0v-4.5M21 10v6"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5ZM20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5.2-3.4 8.5-8 10-4.6-1.5-8-4.8-8-10V6l8-3Z"/><path d="m9 12 2 2 4-5"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10h4v10H4Zm6 0V4h4v16h-4Zm6 0v-7h4v7h-4Z"/></symbol>
+      <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 20h16"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 4 18 8-18 8 3-8-3-8Z"/><path d="M6 12h15"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><path d="M5 10v4h4l5 4V6l-5 4H5ZM17 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.4 4.6L18 9l-4.6 1.4L12 15l-1.4-4.6L6 9l4.6-1.4L12 3ZM19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></symbol>
+    </defs>
+  </svg>
 
   <!-- Top Navigation Header -->
   <header>
-    <div class="brand">🎓 Tutor Bot</div>
+    <div class="brand"><span class="brand-mark"><svg class="icon"><use href="#i-academic"/></svg></span><span>Tutor Bot</span></div>
     <div style="display: flex; gap: 8px; align-items: center;">
       <span class="badge badge-primary" id="role-badge">STUDENT MODE</span>
       <button class="btn-secondary" id="btn-switch-role" style="min-height: 34px; padding: 4px 12px; font-size: 0.8rem;">
-        🔐 Switch Role
+        <svg class="icon icon-sm"><use href="#i-lock"/></svg> Switch Role
       </button>
     </div>
   </header>
@@ -154,8 +182,8 @@
     <!-- 1. LANDING & ACCESS SELECTION -->
     <div id="screen-landing" class="portal-screen active">
       <div class="card" style="text-align: center; padding: 40px 24px;">
-        <div style="font-size: 3rem; margin-bottom: 8px;">🎓</div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary);">Welcome to Tutor Bot</div>
+        <div class="section-icon" style="margin: 0 auto 10px;"><svg class="icon icon-lg"><use href="#i-academic"/></svg></div>
+        <div style="font-size: 1.6rem; font-weight: 750; color: var(--text-main); letter-spacing:-.025em;">Welcome to Tutor Bot</div>
         <p style="color: var(--text-muted); max-width: 500px; margin: 8px auto 24px auto; font-size: 0.95rem;">
           An AI tutoring web platform designed for university faculty and students. Join your course with a class code or access the instructor workspace.
         </p>
@@ -163,7 +191,7 @@
         <div class="landing-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; margin: 0 auto; width: 100%;">
           <!-- Student Portal Card -->
           <div class="card" style="background: #ffffff; border-color: var(--primary); text-align: left; padding: 20px;">
-            <div style="font-size: 1.5rem;">👨‍🎓</div>
+            <div class="section-icon"><svg class="icon"><use href="#i-academic"/></svg></div>
             <div style="font-weight: 800; font-size: 1.1rem; margin-top: 4px;">Student Portal</div>
             <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 12px 0;">Enter your instructor's class code to access your course modules and tutor.</p>
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
@@ -173,16 +201,16 @@
             <input type="text" id="landing-class-code" placeholder="Enter Class Code (e.g. NYU-CS101)..." style="margin-bottom: 10px;" autocomplete="off" />
             <div id="student-login-error" role="alert" style="color: var(--accent-red); font-size: 0.82rem; font-weight: 700; display: none;">Please enter your first name and last initial.</div>
             <button class="btn-primary" id="btn-enter-student" style="width: 100%;">Enter Course</button>
-            <button class="btn-secondary" id="btn-upload-tutor" style="width: 100%; margin-top: 8px;">📂 Upload .tutor File</button>
+            <button class="btn-secondary" id="btn-upload-tutor" style="width: 100%; margin-top: 8px;"><svg class="icon icon-sm"><use href="#i-upload"/></svg> Upload .tutor File</button>
             <input type="file" id="tutor-file-input" accept=".tutor,application/json" hidden />
           </div>
 
           <!-- Instructor Portal Card -->
-          <div class="card" style="background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%); color: #ffffff; text-align: left; padding: 20px;">
-            <div style="font-size: 1.5rem;">🎓</div>
+          <div class="card" style="background: linear-gradient(135deg, #102f50 0%, #1d527f 100%); color: #ffffff; text-align: left; padding: 20px;">
+            <div class="section-icon" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff"><svg class="icon"><use href="#i-academic"/></svg></div>
             <div style="font-weight: 800; font-size: 1.1rem; margin-top: 4px;">Faculty Workspace</div>
             <p style="font-size: 0.82rem; opacity: 0.85; margin: 4px 0 12px 0;">Manage courses, upload sectioned modules, set help scaffolding, and configure AI guardrails.</p>
-            <button class="btn-primary" id="btn-enter-instructor" style="width: 100%; background: #ffffff; color: var(--primary);">Faculty Login 🔒</button>
+            <button class="btn-primary" id="btn-enter-instructor" style="width: 100%; background: #ffffff; color: var(--primary);"><svg class="icon icon-sm"><use href="#i-lock"/></svg> Faculty Login</button>
           </div>
         </div>
       </div>
@@ -191,11 +219,11 @@
     <!-- 2. INSTRUCTOR AUTHENTICATION MODAL -->
     <div id="screen-faculty-auth" class="portal-screen">
       <div class="card" style="max-width: 440px; margin: 40px auto; text-align: center; width: 100%;">
-        <div style="font-size: 2.5rem;">🔒</div>
+        <div class="section-icon" style="margin:0 auto"><svg class="icon"><use href="#i-lock"/></svg></div>
         <div class="card-title">Faculty Security Gate</div>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin: 4px 0 16px 0;">Enter your instructor passcode to unlock the faculty workspace:</p>
         <input type="password" id="faculty-passcode" placeholder="Enter security passcode..." autocomplete="off" />
-        <div id="faculty-auth-error" style="color: var(--accent-red); font-size: 0.82rem; font-weight: 700; display: none;">❌ Invalid Security Passcode</div>
+        <div id="faculty-auth-error" style="color: var(--accent-red); font-size: 0.82rem; font-weight: 700; display: none;">Invalid security passcode.</div>
         <button class="btn-primary" id="btn-unlock-faculty">Unlock Instructor Portal</button>
         <button class="btn-secondary" onclick="showScreen('screen-landing')">Back to Portals</button>
       </div>
@@ -204,19 +232,19 @@
     <!-- 3. INSTRUCTOR WORKSPACE PORTAL -->
     <div id="screen-instructor" class="portal-screen">
       <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchInstructorTab('tab-classes')">📚 Courses & Class Codes</button>
-        <button class="tab-btn" onclick="switchInstructorTab('tab-modules')">📖 Sectioned Modules</button>
-        <button class="tab-btn" onclick="switchInstructorTab('tab-guardrails')">🛡️ AI Scaffolding & Guardrails</button>
+        <button class="tab-btn active" onclick="switchInstructorTab('tab-classes')"><svg class="icon icon-sm"><use href="#i-book"/></svg> Courses &amp; Class Codes</button>
+        <button class="tab-btn" onclick="switchInstructorTab('tab-modules')"><svg class="icon icon-sm"><use href="#i-layers"/></svg> Sectioned Modules</button>
+        <button class="tab-btn" onclick="switchInstructorTab('tab-guardrails')"><svg class="icon icon-sm"><use href="#i-shield"/></svg> AI Scaffolding &amp; Guardrails</button>
       </div>
 
       <!-- Tab A: Courses & Class Codes -->
       <div id="tab-classes" class="card">
-        <div class="card-title">📚 Course Management & Access Codes</div>
+        <div class="card-title"><svg class="icon"><use href="#i-book"/></svg> Course Management &amp; Access Codes</div>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Create new courses. Each course generates a unique Class Code for student login.</p>
 
         <div style="display: flex; gap: 10px; margin-top: 8px;">
           <input type="text" id="new-course-title" placeholder="New Course Title (e.g. NYU CS101 - Intro to AI)..." />
-          <button class="btn-primary" id="btn-create-course" style="white-space: nowrap;">＋ Create Course</button>
+          <button class="btn-primary" id="btn-create-course" style="white-space: nowrap;">Create Course</button>
         </div>
 
         <div id="course-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
@@ -226,18 +254,18 @@
 
       <!-- Tab B: Sectioned Modules -->
       <div id="tab-modules" class="card" style="display: none;">
-        <div class="card-title">📖 Sectioned Course Modules</div>
+        <div class="card-title"><svg class="icon"><use href="#i-layers"/></svg> Sectioned Course Modules</div>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Select a course and upload sectioned modules, lecture notes, or readings.</p>
 
         <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Select Course:</label>
         <select id="sel-instructor-course" onchange="renderInstructorModules()"></select>
 
         <div style="background: #f8fafc; border: 1px solid var(--card-border); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
-          <div style="font-weight: 700; font-size: 0.95rem; color: var(--primary);">＋ Add New Module</div>
+          <div style="font-weight: 700; font-size: 0.95rem; color: var(--primary);">Add New Module</div>
           <input type="text" id="new-module-title" placeholder="Module Title (e.g. Module 1: Socratic Logic & Ethics)..." />
           <input type="text" id="new-module-desc" placeholder="Brief Summary (e.g. Fundamentals of guided reasoning)..." />
           <textarea id="new-module-content" placeholder="Paste module readings, lecture content, or syllabus guidelines..."></textarea>
-          <button class="btn-secondary" id="btn-generate-lesson-plan">✨ Auto-Generate AI Lesson Plan &amp; RAG Context</button>
+          <button class="btn-secondary" id="btn-generate-lesson-plan"><svg class="icon icon-sm"><use href="#i-spark"/></svg> Generate AI Lesson Plan &amp; RAG Context</button>
           <div id="lesson-plan-status" role="status" style="font-size: 0.82rem; color: var(--text-muted);"></div>
           <button class="btn-primary" id="btn-save-module">Save Module</button>
         </div>
@@ -247,7 +275,7 @@
 
       <!-- Tab C: AI Scaffolding & Guardrails -->
       <div id="tab-guardrails" class="card" style="display: none;">
-        <div class="card-title">🛡️ AI Scaffolding & Safety Guardrails</div>
+        <div class="card-title"><svg class="icon"><use href="#i-shield"/></svg> AI Scaffolding &amp; Safety Guardrails</div>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">Configure how much assistance the AI Tutor provides and establish enforcement rules.</p>
 
         <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Select Course to Configure:</label>
@@ -255,23 +283,23 @@
 
         <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Tutoring Help Level / Scaffolding:</label>
         <select id="sel-help-level">
-          <option value="socratic">🧠 Minimal Hints (High Independence - Socratic Questions Only)</option>
-          <option value="balanced" selected>⚖️ Balanced Guidance (Nudges & Partial Explanations)</option>
-          <option value="step-by-step">📖 Full Step-by-Step Walkthroughs</option>
+          <option value="socratic">Minimal Hints — Socratic Questions Only</option>
+          <option value="balanced" selected>Balanced Guidance — Nudges &amp; Partial Explanations</option>
+          <option value="step-by-step">Full Step-by-Step Walkthroughs</option>
         </select>
 
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
           <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
             <input type="checkbox" id="chk-block-answers" checked style="width: auto;" />
-            🛡️ Block Direct Answer Dumps (Forces student reasoning)
+            Block direct answer dumps (requires student reasoning)
           </label>
           <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
             <input type="checkbox" id="chk-honor-code" checked style="width: auto;" />
-            📜 Enforce Academic Honor Code (Refuse exam/essay ghostwriting)
+            Enforce academic honor code (refuse exam or essay ghostwriting)
           </label>
           <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
             <input type="checkbox" id="chk-domain-bound" checked style="width: auto;" />
-            🎯 Restrict to Course Domain Topics (Redirect off-topic queries)
+            Restrict to course-domain topics (redirect off-topic queries)
           </label>
         </div>
 
@@ -285,11 +313,11 @@
     <!-- 4. STUDENT TUTORING PORTAL -->
     <div id="screen-student" class="portal-screen">
       <div class="tab-bar">
-        <button class="tab-btn active" id="student-tab-tutor" onclick="switchStudentTab('tutor')">💬 AI Tutor</button>
-        <button class="tab-btn" id="student-tab-progress" onclick="switchStudentTab('progress')">📊 My Progress (.md)</button>
+        <button class="tab-btn active" id="student-tab-tutor" onclick="switchStudentTab('tutor')"><svg class="icon icon-sm"><use href="#i-chat"/></svg> AI Tutor</button>
+        <button class="tab-btn" id="student-tab-progress" onclick="switchStudentTab('progress')"><svg class="icon icon-sm"><use href="#i-chart"/></svg> My Progress</button>
       </div>
       <!-- Course Banner -->
-      <div class="card student-tutor-panel" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-color: #c7d2fe;">
+      <div class="card student-tutor-panel" style="background: linear-gradient(135deg, #f3f7fb 0%, #e8f0f7 100%); border-color: #cbd9e7;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
             <span class="badge badge-primary" id="student-class-code-badge">CODE: NYU-CS101</span>
@@ -309,10 +337,10 @@
           <div>
             <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Tutoring Mode:</label>
             <select id="sel-tutoring-mode" onchange="switchStudentModule()">
-              <option value="Socratic Tutor 🧠">🧠 Socratic Tutor (Questions & Guidance)</option>
-              <option value="Practice Quizmaster ❓">❓ Practice Quizmaster (Interactive Drill)</option>
-              <option value="Friendly Mentor 🤝">🤝 Friendly Mentor (Conversational Nudges)</option>
-              <option value="Direct Instructor 🎓">🎓 Direct Instructor (Academic Style)</option>
+              <option value="Socratic Tutor">Socratic Tutor — Questions &amp; Guidance</option>
+              <option value="Practice Quizmaster">Practice Quizmaster — Interactive Drill</option>
+              <option value="Friendly Mentor">Friendly Mentor — Conversational Nudges</option>
+              <option value="Direct Instructor">Direct Instructor — Academic Style</option>
             </select>
           </div>
         </div>
@@ -333,17 +361,17 @@
 
         <div style="display: flex; gap: 8px;">
           <input type="text" id="student-chat-input" placeholder="Type your question or response here..." autocomplete="off" />
-          <button class="btn-primary" id="btn-send-chat" style="min-width: 90px; width: auto;">💬 Send</button>
+          <button class="btn-primary" id="btn-send-chat" style="min-width: 90px; width: auto;"><svg class="icon icon-sm"><use href="#i-send"/></svg> Send</button>
         </div>
       </div>
 
       <div class="card student-tutor-panel">
         <div class="student-grid" style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;">
           <div>
-            <div class="card-title">📝 Student Notes Pad</div>
+            <div class="card-title"><svg class="icon"><use href="#i-note"/></svg> Student Notes</div>
             <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 3px;">Your notes are saved in this browser as you type and included in your session package.</div>
           </div>
-          <button class="btn-secondary" id="btn-export-notes">⬇ Export Notes as PDF</button>
+          <button class="btn-secondary" id="btn-export-notes"><svg class="icon icon-sm"><use href="#i-download"/></svg> Export Notes as PDF</button>
         </div>
         <textarea id="student-notes" class="notes-pad" placeholder="Capture key ideas, questions, examples, and takeaways..."></textarea>
       </div>
@@ -355,7 +383,7 @@
         <div id="package-status" role="status" style="font-size: 0.82rem; color: var(--text-muted);"></div>
       </div>
       <div id="student-progress-panel" class="card" style="display: none;">
-        <div class="card-title">📊 My Progress &amp; Markdown Reports</div>
+        <div class="card-title"><svg class="icon"><use href="#i-chart"/></svg> My Progress &amp; Markdown Reports</div>
         <div class="progress-grid">
           <div class="metric"><div class="metric-value" id="progress-mastery">0%</div><div>Concept mastery</div></div>
           <div class="metric"><div class="metric-value" id="progress-sessions">0</div><div>Sessions</div></div>
@@ -369,9 +397,9 @@
         </select>
         <pre class="markdown-preview" id="progress-markdown"></pre>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn-secondary" onclick="downloadProgressReport('profile')">⬇ STUDENT_PROFILE.md</button>
-          <button class="btn-secondary" onclick="downloadProgressReport('mastery')">⬇ STUDENT_MASTERY.md</button>
-          <button class="btn-secondary" onclick="downloadProgressReport('analytics')">⬇ STUDENT_ANALYTICS.md</button>
+          <button class="btn-secondary" onclick="downloadProgressReport('profile')"><svg class="icon icon-sm"><use href="#i-download"/></svg> STUDENT_PROFILE.md</button>
+          <button class="btn-secondary" onclick="downloadProgressReport('mastery')"><svg class="icon icon-sm"><use href="#i-download"/></svg> STUDENT_MASTERY.md</button>
+          <button class="btn-secondary" onclick="downloadProgressReport('analytics')"><svg class="icon icon-sm"><use href="#i-download"/></svg> STUDENT_ANALYTICS.md</button>
         </div>
       </div>
     </div>
@@ -457,7 +485,7 @@
       if (role === 'tutor') {
         const audioButton = document.createElement('button');
         audioButton.className = 'audio-play-btn';
-        audioButton.textContent = '🔊';
+        audioButton.innerHTML = '<svg class="icon icon-sm" aria-hidden="true"><use href="#i-volume"/></svg>';
         audioButton.type = 'button';
         audioButton.setAttribute('aria-label', 'Read tutor response aloud');
         audioButton.onclick = () => playElevenLabsAudio(text);
